@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signature Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0d;
+    --paper: #faf8f5;
+    --accent: #c8451a;
+    --muted: #8a8279;
+    --border: #e2ddd8;
+    --field-bg: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  header {
+    margin-bottom: 3rem;
+  }
+
+  .kicker {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.1;
+    color: var(--ink);
+    font-weight: 400;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 0.75rem;
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* Form */
+  .form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--ink);
+    background: var(--field-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    width: 100%;
+  }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,69,26,0.1);
+  }
+
+  input::placeholder { color: #c4bfba; }
+
+  .generate-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+
+  .generate-btn:hover { background: #2a2826; }
+  .generate-btn:active { transform: scale(0.99); }
+
+  /* Output */
+  .output-section {
+    display: none;
+    animation: fadeUp 0.3s ease forwards;
+  }
+
+  .output-section.visible { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .output-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Signature preview wrapper */
+  .sig-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px 32px;
+    margin-bottom: 1rem;
+  }
+
+  /* The actual signature — this is what gets copied */
+  #sig-render {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1a1a1a;
+  }
+
+  #sig-render table {
+    border-collapse: collapse;
+  }
+
+  .copy-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .copy-btn {
+    flex: 1;
+    padding: 11px 18px;
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .copy-btn.copied {
+    background: #2d6a4f;
+    border-color: #2d6a4f;
+    color: #fff;
+  }
+
+  .hint {
+    margin-top: 1rem;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    padding: 12px 16px;
+    background: #f5f2ee;
+    border-radius: 4px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .hint strong { color: var(--ink); font-weight: 500; }
+
+  .img-note {
+    margin-top: 0.75rem;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .img-url {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    word-break: break-all;
+    background: #fdf1ed;
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <p class="kicker">Email Signature Generator</p>
+    <h1>Make your <em>mark.</em></h1>
+    <p class="subtitle">Fill in your details below and get a polished signature ready to paste into Gmail.</p>
+  </header>
+
+  <div class="form-section">
+    <div class="field">
+      <label for="fname">Full name</label>
+      <input type="text" id="fname" placeholder="Jane Smith" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="ftitle">Job title <span style="font-size:10px;opacity:.6;">(optional)</span></label>
+      <input type="text" id="ftitle" placeholder="Senior Designer">
+    </div>
+    <div class="field">
+      <label for="fcompany">Company <span style="font-size:10px;opacity:.6;">(optional)</span></label>
+      <input type="text" id="fcompany" placeholder="Acme Inc.">
+    </div>
+    <div class="field">
+      <label for="fphone">Phone number</label>
+      <input type="tel" id="fphone" placeholder="+1 (312) 555-0100" autocomplete="tel">
+    </div>
+    <div class="field">
+      <label for="femail">Email address</label>
+      <input type="email" id="femail" placeholder="jane@acme.com" autocomplete="email">
+    </div>
+    <button class="generate-btn" onclick="generate()">Generate signature →</button>
+  </div>
+
+  <div class="output-section" id="output">
+    <p class="output-label">Your signature</p>
+
+    <div class="sig-wrapper">
+      <div id="sig-render"></div>
+    </div>
+
+    <div class="copy-row">
+      <button class="copy-btn" id="copyBtn" onclick="copySig()">Copy signature</button>
+    </div>
+
+    <div class="hint">
+      <strong>How to use in Gmail:</strong> Go to Settings → See all settings → General → Signature → Create new. Then paste with <strong>Ctrl+V</strong> (or Cmd+V on Mac). Gmail preserves the HTML formatting.
+    </div>
+
+    <p class="img-note">
+      Your signature includes an image hosted at:<br>
+      <span class="img-url" id="img-url-display"></span><br><br>
+      Replace the file at that URL anytime to update the image across all existing signatures automatically.
+    </p>
+  </div>
+
+</div>
+
+<script>
+  // ── Change this URL to wherever you host your signature image ──
+  const IMAGE_URL = "https://your-domain.com/signature-logo.png";
+
+  function generate() {
+    const name    = document.getElementById('fname').value.trim();
+    const title   = document.getElementById('ftitle').value.trim();
+    const company = document.getElementById('fcompany').value.trim();
+    const phone   = document.getElementById('fphone').value.trim();
+    const email   = document.getElementById('femail').value.trim();
+
+    if (!name || !phone || !email) {
+      alert('Please fill in your name, phone, and email.');
+      return;
+    }
+
+    const titleLine = [title, company].filter(Boolean).join(' · ');
+
+    const sig = `
+<table cellpadding="0" cellspacing="0" border="0" style="font-family:Georgia,'Times New Roman',serif;font-size:14px;color:#1a1a1a;line-height:1.6;">
+  <tr>
+    <td style="padding-right:20px;vertical-align:top;border-right:2px solid #c8451a;">
+      <img src="${IMAGE_URL}" width="72" height="72" alt="${name}" style="display:block;border-radius:4px;object-fit:cover;">
+    </td>
+    <td style="padding-left:20px;vertical-align:top;">
+      <div style="font-size:17px;font-weight:bold;color:#0f0e0d;letter-spacing:-0.01em;">${name}</div>
+      ${titleLine ? `<div style="font-size:12px;color:#8a8279;margin-top:1px;letter-spacing:0.02em;">${titleLine}</div>` : ''}
+      <div style="margin-top:10px;font-size:13px;color:#444;">
+        <a href="tel:${phone.replace(/\s/g,'')}" style="color:#1a1a1a;text-decoration:none;">&#128222; ${phone}</a><br>
+        <a href="mailto:${email}" style="color:#c8451a;text-decoration:none;">&#9993; ${email}</a>
+      </div>
+    </td>
+  </tr>
+</table>
+    `.trim();
+
+    document.getElementById('sig-render').innerHTML = sig;
+    document.getElementById('img-url-display').textContent = IMAGE_URL;
+
+    const out = document.getElementById('output');
+    out.classList.add('visible');
+    out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // reset copy button
+    const btn = document.getElementById('copyBtn');
+    btn.classList.remove('copied');
+    btn.textContent = 'Copy signature';
+  }
+
+  async function copySig() {
+    const html = document.getElementById('sig-render').innerHTML;
+    const btn = document.getElementById('copyBtn');
+
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([document.getElementById('sig-render').innerText], { type: 'text/plain' })
+        })
+      ]);
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy signature';
+        btn.classList.remove('copied');
+      }, 2500);
+    } catch {
+      // Fallback: select the rendered HTML
+      const range = document.createRange();
+      range.selectNode(document.getElementById('sig-render'));
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      document.execCommand('copy');
+      window.getSelection().removeAllRanges();
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy signature';
+        btn.classList.remove('copied');
+      }, 2500);
+    }
+  }
+
+  // Allow Enter key to trigger generate
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') generate();
+  });
+</script>
+</body>
+</html>
